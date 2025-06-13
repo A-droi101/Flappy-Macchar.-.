@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Flappy Macchar - HD Game</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      overflow: hidden;
+      background-color: #c8f4ff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    canvas {
+      display: block;
+      margin: auto;
+      background: linear-gradient(to bottom, #c8f4ff, #ffffff);
+      border: 3px solid #000;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="480" height="720"></canvas>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let macchar = {
+      x: 100,
+      y: 200,
+      width: 60,
+      height: 60,
+      velocity: 0,
+      gravity: 0.6,
+      jump: -10
+    };
+
+    let pipes = [];
+    let frame = 0;
+    let score = 0;
+    let gameOver = false;
+
+    const mosquitoImg = new Image();
+    mosquitoImg.src = "hd_mosquito.png"; // HD image you downloaded
+
+    function drawMacchar() {
+      ctx.drawImage(mosquitoImg, macchar.x, macchar.y, macchar.width, macchar.height);
+    }
+
+    function drawPipes() {
+      ctx.fillStyle = "#4CAF50";
+      pipes.forEach(pipe => {
+        ctx.fillRect(pipe.x, 0, 60, pipe.top);
+        ctx.fillRect(pipe.x, pipe.top + pipe.gap, 60, canvas.height);
+      });
+    }
+
+    function update() {
+      if (gameOver) return;
+
+      macchar.velocity += macchar.gravity;
+      macchar.y += macchar.velocity;
+
+      if (frame % 90 === 0) {
+        let top = Math.random() * 300 + 50;
+        pipes.push({ x: canvas.width, top: top, gap: 160 });
+      }
+
+      pipes.forEach(pipe => {
+        pipe.x -= 3;
+
+        if (
+          macchar.x + macchar.width > pipe.x &&
+          macchar.x < pipe.x + 60 &&
+          (macchar.y < pipe.top || macchar.y + macchar.height > pipe.top + pipe.gap)
+        ) {
+          gameOver = true;
+        }
+
+        if (!pipe.scored && pipe.x + 60 < macchar.x) {
+          score++;
+          pipe.scored = true;
+        }
+      });
+
+      if (macchar.y + macchar.height > canvas.height || macchar.y < 0) {
+        gameOver = true;
+      }
+
+      pipes = pipes.filter(p => p.x + 60 > 0);
+    }
+
+    function drawScore() {
+      ctx.fillStyle = "#222";
+      ctx.font = "32px sans-serif";
+      ctx.fillText("Score: " + score, 20, 40);
+    }
+
+    function loop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      drawPipes();
+      drawMacchar();
+      drawScore();
+
+      update();
+
+      if (gameOver) {
+        ctx.fillStyle = "red";
+        ctx.font = "48px sans-serif";
+        ctx.fillText("Game Over", 120, canvas.height / 2);
+        return;
+      }
+
+      frame++;
+      requestAnimationFrame(loop);
+    }
+
+    window.addEventListener("keydown", () => {
+      macchar.velocity = macchar.jump;
+    });
+
+    mosquitoImg.onload = () => {
+      loop();
+    };
+  </script>
+</body>
+</html>
